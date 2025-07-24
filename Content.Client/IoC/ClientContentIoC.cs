@@ -28,7 +28,7 @@ using Content.Shared.Players.PlayTimeTracking;
 using Content.Shared.Players.RateLimiting;
 namespace Content.Client.IoC
 {
-    internal static class ClientContentIoC
+    public static class ClientContentIoC // WWDP EDIT
     {
         public static void Register()
         {
