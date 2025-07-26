@@ -5,11 +5,11 @@ namespace Content.UIPreviewer;
 
 public sealed class Program
 {
-    public static string TypeName;
+    public static TypeRepresentation TypeName;
 
     static void Main(string[] args)
     {
-        TypeName = args.Length == 0 ? "none" : args[0];
+        TypeName = args.Length == 0 ? TypeRepresentation.None : new(args[0]);
 
         ContentStart.StartLibrary([], new()
         {

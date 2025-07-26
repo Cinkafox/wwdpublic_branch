@@ -52,21 +52,27 @@ namespace Content.UIPreviewer
             _invokeScreenInit = false;
         }
 
-        public void UpdateScreen(string typeStr)
+        public void UpdateScreen(TypeRepresentation typeRepresentation)
         {
             Screen.ClearMessages();
 
-            var type = _reflectionManager.GetType(typeStr);
+            if (typeRepresentation == TypeRepresentation.None)
+            {
+                Screen.AddMessage("Hello! Start changing .xaml or .cs files");
+                return;
+            }
+
+            var type = _reflectionManager.GetType(typeRepresentation);
 
             if (type == null)
             {
-                Screen.AddMessage($"Can't load type {typeStr}");
+                Screen.AddMessage($"Can't load type {typeRepresentation}");
                 return;
             }
 
             if (!type.IsAssignableTo(typeof(Control)))
             {
-                Screen.AddMessage($"Type {typeStr} not assignable to Control");
+                Screen.AddMessage($"Type {typeRepresentation} not assignable to Control");
                 return;
             }
 
@@ -117,7 +123,7 @@ namespace Content.UIPreviewer
                     .Replace(".xaml", "")
                     .Replace(".cs", "");
 
-                _taskManager.RunOnMainThread(() => UpdateScreen(name));
+                _taskManager.RunOnMainThread(() => UpdateScreen((TypeRepresentation)name));
             }
 
             watcher.Changed += OnWatcherEvent;
@@ -173,4 +179,26 @@ namespace Content.UIPreviewer
             return null;
         }
     }
+}
+
+public struct TypeRepresentation : IEquatable<TypeRepresentation>
+{
+    public string TypeName = "none";
+    public static TypeRepresentation None = new TypeRepresentation();
+
+    public TypeRepresentation() { }
+
+    public TypeRepresentation(string typeName)
+    {
+        TypeName = typeName;
+    }
+
+    public static explicit operator TypeRepresentation(string typeName) => new(typeName);
+    public static implicit operator string(TypeRepresentation type) => type.TypeName;
+
+    public bool Equals(TypeRepresentation other) => TypeName == other.TypeName;
+
+    public override bool Equals(object obj) => obj is TypeRepresentation other && Equals(other);
+
+    public override int GetHashCode() => (TypeName != null ? TypeName.GetHashCode() : 0);
 }
