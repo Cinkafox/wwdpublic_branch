@@ -3,6 +3,7 @@ using System.IO;
 using System.Linq;
 using Robust.Client;
 using Robust.Client.UserInterface;
+using Robust.Client.UserInterface.Controls;
 using Robust.Shared.Asynchronous;
 using Robust.Shared.ContentPack;
 using Robust.Shared.IoC;
@@ -48,6 +49,7 @@ namespace Content.UIPreviewer
             _client.StartSinglePlayer();
             _interfaceManager.StateRoot.Children.Clear();
             _interfaceManager.StateRoot.Children.Add(Screen = new ControlScreen());
+            LayoutContainer.SetAnchorPreset(Screen, LayoutContainer.LayoutPreset.Wide);
             UpdateScreen(Program.TypeName);
             _invokeScreenInit = false;
         }

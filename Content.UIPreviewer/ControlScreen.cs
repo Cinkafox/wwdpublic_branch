@@ -11,15 +11,19 @@ public sealed class ControlScreen : UIScreen
     private readonly BoxContainer _messageContainer;
     public ControlScreen()
     {
-        var stackPanel = new BoxContainer();
-        AddChild(stackPanel);
-        stackPanel.AddChild(_controlContainer = new PanelContainer());
-        stackPanel.AddChild(_messageContainer = new BoxContainer());
+        var panel = new PanelContainer();
+        AddChild(panel);
+        panel.AddChild(_controlContainer = new PanelContainer());
+        panel.AddChild(_messageContainer = new BoxContainer());
+        SetAnchorPreset(_controlContainer, LayoutPreset.Wide);
+        SetAnchorPreset(_messageContainer, LayoutPreset.Wide);
+        SetAnchorPreset(panel, LayoutPreset.Wide);
     }
     public void SetControl(Control control)
     {
         _controlContainer.Children.Clear();
         _controlContainer.AddChild(control);
+        SetAnchorPreset(control, LayoutPreset.Wide);
     }
 
     public void AddMessage(string message)
