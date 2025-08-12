@@ -84,7 +84,21 @@ namespace Content.UIPreviewer
             }
             catch (Exception e)
             {
-                Screen.AddMessage($"Exception occurred while loading type {Program.TypeName}: {e.Message}");
+                LogError(e, typeRepresentation);
+            }
+        }
+
+        private void LogError(Exception e, TypeRepresentation typeRepresentation)
+        {
+            Screen.AddMessage($"Exception occurred while loading type {typeRepresentation}: {e.Message}");
+            Screen.AddMessage($"Stack trace: {e.StackTrace}");
+
+            var innerException = e.InnerException;
+            while (innerException != null)
+            {
+                Screen.AddMessage(innerException.Message);
+                Screen.AddMessage($"Stack trace: {innerException.StackTrace}");
+                innerException = innerException.InnerException;
             }
         }
 

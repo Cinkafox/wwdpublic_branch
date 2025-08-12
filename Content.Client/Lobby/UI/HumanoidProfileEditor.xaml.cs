@@ -172,6 +172,9 @@ namespace Content.Client.Lobby.UI
             _characterRequirementsSystem = _entManager.System<CharacterRequirementsSystem>();
             _controller = UserInterfaceManager.GetUIController<LobbyUIController>();
 
+            TabBtn1.TabContainer = CharacterEditTabContainer;
+            TabBtn2.TabContainer = CharacterEditTabContainer;
+
             ImportButton.OnPressed += args => { ImportProfile(); };
             ExportButton.OnPressed += args => { ExportProfile(); };
 

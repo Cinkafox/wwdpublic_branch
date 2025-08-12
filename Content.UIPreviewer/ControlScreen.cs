@@ -14,7 +14,11 @@ public sealed class ControlScreen : UIScreen
         var panel = new PanelContainer();
         AddChild(panel);
         panel.AddChild(_controlContainer = new PanelContainer());
-        panel.AddChild(_messageContainer = new BoxContainer());
+        panel.AddChild(_messageContainer = new BoxContainer()
+        {
+            VerticalAlignment = VAlignment.Top,
+            Orientation = BoxContainer.LayoutOrientation.Vertical
+        });
         SetAnchorPreset(_controlContainer, LayoutPreset.Wide);
         SetAnchorPreset(_messageContainer, LayoutPreset.Wide);
         SetAnchorPreset(panel, LayoutPreset.Wide);
