@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Numerics;
 using Robust.Client.Graphics;
 using Robust.Client.UserInterface;
@@ -33,43 +34,86 @@ public sealed class SvgRenderOverlay : Overlay
 
 
         _svg.Render(g,
-            (element, fired) =>
+            (element, matrix) =>
             {
-                if (element.GetAttribute("id").Equals("RightPuppil") || element.GetAttribute("id").Equals("LeftPuppil"))
-                {
+                SvgTransformHelper.Define(element, matrix)
+                    .WithRoot()
+                    .Transform(new(150,150))
+                    .Scale(new(2));
 
-                    g.SetTransform(new Vector2(150,150) + p * new Vector2(1,1.5f), Angle.Zero, Vector2.One*2);
-                    fired.Fire();
-                }
-                else if (
-                    element.GetAttribute("id").Equals("path9") ||
-                    element.GetAttribute("id").Equals("path8") ||
-                    element.GetAttribute("id").Equals("path7") ||
-                    element.GetAttribute("id").Equals("path6") ||
-                    element.GetAttribute("id").Equals("path28") ||
-                    element.GetAttribute("id").Equals("path15"))
-                {
-                    g.SetTransform(new Vector2(150, 150 + p.Y / 2), Angle.Zero, Vector2.One*2);
-                }
-                else if (
-                    element.GetAttribute("id").Equals("LeftEar") ||
-                    element.GetAttribute("id").Equals("path27"))
-                {
-                    g.SetTransform(new Vector2(150, 150 - p.Y / 2), Angle.Zero, Vector2.One*2);
-                    fired.Fire();
-                }
-                else if (
-                    element.GetAttribute("id").Equals("g26") ||
-                    element.GetAttribute("id").Equals("g27"))
-                {
-                    g.SetTransform(new Vector2(150, 150 + p.Y / 2), Angle.Zero, Vector2.One*2);
-                    fired.Fire();
-                }
-                else
-                {
-                    if (!fired.IsFired)
-                        g.SetTransform(new Vector2(150,150), Angle.Zero, Vector2.One*2);
-                }
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("RightPuppil", "LeftPuppil")
+                    .Transform(p * new Vector2(1, 1.5f));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("path9", "path8", "path7", "path6", "path28", "Mouth")
+                    .Transform(new Vector2(0, p.Y / 2));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("LeftEar", "path27")
+                    .Transform(new Vector2(0,- p.Y / 2));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("g26", "g27")
+                    .Transform(new Vector2(0, p.Y / 2));
             });
+    }
+}
+
+public sealed class SvgTransformHelper
+{
+    private MiniXmlElement _element;
+    private MatrixHandler _matrix;
+
+    private string[] _ids = [];
+    private bool _checkRoot;
+
+    public SvgTransformHelper(MiniXmlElement element, MatrixHandler matrix)
+    {
+        _element = element;
+        _matrix = matrix;
+    }
+
+    public static SvgTransformHelper Define(MiniXmlElement element, MatrixHandler matrix) =>
+        new SvgTransformHelper(element, matrix);
+
+    public SvgTransformHelper WithIds(params string[] ids)
+    {
+        _ids = ids;
+        return this;
+    }
+
+    public SvgTransformHelper WithRoot()
+    {
+        _checkRoot = true;
+        return this;
+    }
+
+    public SvgTransformHelper Append(in Matrix3x2 matrix)
+    {
+        if(CheckDoExecute())
+            _matrix.Append(matrix);
+
+        return this;
+    }
+
+    public SvgTransformHelper Transform(in Vector2 pos) =>
+        Append(Matrix3x2.CreateTranslation(pos));
+
+    public SvgTransformHelper Rotate(in Angle angle) =>
+        Append(Matrix3x2.CreateRotation((float)angle));
+
+    public SvgTransformHelper Rotate(in Angle angle, in Vector2 center) =>
+        Append(Matrix3x2.CreateRotation((float)angle, center));
+
+    public SvgTransformHelper Scale(in Vector2 scale) =>
+        Append(Matrix3x2.CreateScale(scale));
+
+    private bool CheckDoExecute()
+    {
+        if (_checkRoot && _element.Parent is null)
+            return true;
+
+        return _ids.Contains(_element.GetAttribute("id"));
     }
 }

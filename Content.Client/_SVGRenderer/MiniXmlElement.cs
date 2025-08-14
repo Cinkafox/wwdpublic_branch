@@ -13,22 +13,29 @@ public sealed class MiniXmlElement
     public Dictionary<string, string> Attributes = new();
     public Dictionary<string, object> NonSerializedAttributes = new();
     public IEnumerable<MiniXmlElement> Children => _children;
-
+    public MiniXmlElement? Parent { get; private set; }
 
     public void AddChild(MiniXmlElement element)
     {
+        if(element.Parent != null)
+            throw new ArgumentException("Element already has a parent");
+
         _children.Add(element);
+        element.Parent = this;
         if (element.TryGetAttribute("id", out var id))
             _childIdAcc[id] = _children.Count - 1;
     }
 
-    public bool TryGetNonSerializedAttribute<T>(string name,[NotNullWhen(true)] out T? value)
+    public bool TryGetNonSerializedAttribute<T>(string name,[NotNullWhen(true)] out T? value, bool searchParent = false)
     {
         if (NonSerializedAttributes.TryGetValue(name, out var valueRaw) && valueRaw is T tvalue)
         {
             value = tvalue;
             return true;
         }
+
+        if(Parent != null && searchParent)
+            return Parent.TryGetNonSerializedAttribute<T>(name, out value, searchParent);
 
         value = default;
         return false;

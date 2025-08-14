@@ -42,17 +42,91 @@ public sealed class SvgDocument
         return svg;
     }
 
-    public void Render(DrawingHandleBase g, Action<MiniXmlElement, FiredHandler>? beforeDraw = null)
+    public void Render(DrawingHandleBase g, Action<MiniXmlElement, MatrixHandler>? beforeDraw = null)
     {
+        var handler = new MatrixHandler();
+
+        beforeDraw?.Invoke(Xml, handler);
+
         foreach (var node in Xml.Children)
         {
-            RenderElement(g, node, new SvgStyle(), new FiredHandler(), beforeDraw);
+            RenderElement(g, node, new SvgStyle(), handler.Clone(), beforeDraw);
         }
     }
 
-    private void RenderElement(DrawingHandleBase g, MiniXmlElement node, SvgStyle parentStyle, FiredHandler firedHandler , Action<MiniXmlElement, FiredHandler>? beforeDraw = null)
+    private void RenderElement(DrawingHandleBase g, MiniXmlElement node, SvgStyle parentStyle, MatrixHandler matrixHandler , Action<MiniXmlElement, MatrixHandler>? beforeDraw = null)
     {
-        beforeDraw?.Invoke(node, firedHandler);
+
+        if (node.HasAttribute("transform"))
+        {
+            if(!node.TryGetNonSerializedAttribute<List<SvgTransformParser.TransformCmd>>("transform", out var transform))
+            {
+                transform = SvgTransformParser.ParseTransform(node.GetAttribute("transform"));
+                node.NonSerializedAttributes.Add("transform", transform);
+            }
+
+            foreach (var cmd in transform)
+            {
+                switch (cmd.Type)
+                {
+                   case SvgTransformParser.TransformType.Translate:
+                        if (cmd.Params.Length == 1)
+                            matrixHandler.Transform(new Vector2(cmd.Params[0], 0));
+                        else if (cmd.Params.Length >= 2)
+                            matrixHandler.Transform(new Vector2(cmd.Params[0], cmd.Params[1]));
+                        break;
+
+                    case SvgTransformParser.TransformType.Rotate:
+                        if (cmd.Params.Length == 1)
+                        {
+                            matrixHandler.Rotate(Angle.FromDegrees(cmd.Params[0]));
+                        }
+                        else if (cmd.Params.Length >= 3)
+                        {
+                            matrixHandler.Rotate(Angle.FromDegrees(cmd.Params[0]),
+                                   new Vector2(cmd.Params[1], cmd.Params[2]));
+                        }
+                        break;
+
+                    case SvgTransformParser.TransformType.Scale:
+                        if (cmd.Params.Length == 1)
+                            matrixHandler.Scale(new Vector2(cmd.Params[0], cmd.Params[0]));
+                        else if (cmd.Params.Length >= 2)
+                            matrixHandler.Scale(new Vector2(cmd.Params[0], cmd.Params[1]));
+                        break;
+
+                    case SvgTransformParser.TransformType.SkewX:
+                        if (cmd.Params.Length >= 1)
+                        {
+                            var angle = Angle.FromDegrees(cmd.Params[0]);
+                            matrixHandler.Append(new Matrix3x2(1, 0, (float)Math.Tan(angle), 1, 0, 0));
+                        }
+                        break;
+
+                    case SvgTransformParser.TransformType.SkewY:
+                        if (cmd.Params.Length >= 1)
+                        {
+                            var angle = Angle.FromDegrees(cmd.Params[0]);
+                            matrixHandler.Append(new Matrix3x2(1, (float)Math.Tan(angle), 0, 1, 0, 0));
+                        }
+                        break;
+
+                    case SvgTransformParser.TransformType.Matrix:
+                        if (cmd.Params.Length == 6)
+                        {
+                            matrixHandler.Append(new Matrix3x2(
+                                cmd.Params[0], cmd.Params[1],
+                                cmd.Params[2], cmd.Params[3],
+                                cmd.Params[4], cmd.Params[5]
+                            ));
+                        }
+                        break;
+                }
+            }
+        }
+
+
+        beforeDraw?.Invoke(node, matrixHandler);
 
         if(!node.TryGetNonSerializedAttribute<SvgStyle>("style", out var style))
         {
@@ -60,11 +134,13 @@ public sealed class SvgDocument
             node.NonSerializedAttributes.Add("style", style);
         }
 
+        g.SetTransform(matrixHandler.Matrix);
+
         switch (node.Name)
         {
             case "g":
                 foreach (var child in node.Children)
-                    RenderElement(g, child, style, firedHandler.Clone(), beforeDraw);
+                    RenderElement(g, child, style, matrixHandler.Clone(), beforeDraw);
                 break;
             case "rect":
                 DrawRect(g, node, style);
@@ -432,20 +508,28 @@ public sealed class SvgDocument
 }
 
 
-public sealed class FiredHandler
+public sealed class MatrixHandler
 {
-    public bool IsFired { get; private set; } = false;
+    public Matrix3x2 Matrix {get; private set;} = Matrix3x2.Identity;
 
-    public void Fire()
-    {
-        IsFired = true;
-    }
+    public void Append(in Matrix3x2 value) =>
+        Matrix *= value;
 
-    public FiredHandler Clone()
-    {
-        return new FiredHandler()
+    public void Transform(in Vector2 pos) =>
+        Append(Matrix3x2.CreateTranslation(pos));
+
+    public void Rotate(in Angle angle) =>
+        Append(Matrix3x2.CreateRotation((float)angle));
+
+    public void Rotate(in Angle angle,in Vector2 center) =>
+        Append(Matrix3x2.CreateRotation((float)angle, center));
+
+    public void Scale(in Vector2 scale) =>
+        Append(Matrix3x2.CreateScale(scale));
+
+    public MatrixHandler Clone() =>
+        new()
         {
-            IsFired = IsFired
+            Matrix = Matrix
         };
-    }
 }
