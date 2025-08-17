@@ -56,75 +56,7 @@ public sealed class SvgDocument
 
     private void RenderElement(DrawingHandleBase g, MiniXmlElement node, SvgStyle parentStyle, MatrixHandler matrixHandler , Action<MiniXmlElement, MatrixHandler>? beforeDraw = null)
     {
-
-        if (node.HasAttribute("transform"))
-        {
-            if(!node.TryGetNonSerializedAttribute<List<SvgTransformParser.TransformCmd>>("transform", out var transform))
-            {
-                transform = SvgTransformParser.ParseTransform(node.GetAttribute("transform"));
-                node.NonSerializedAttributes.Add("transform", transform);
-            }
-
-            foreach (var cmd in transform)
-            {
-                switch (cmd.Type)
-                {
-                   case SvgTransformParser.TransformType.Translate:
-                        if (cmd.Params.Length == 1)
-                            matrixHandler.Transform(new Vector2(cmd.Params[0], 0));
-                        else if (cmd.Params.Length >= 2)
-                            matrixHandler.Transform(new Vector2(cmd.Params[0], cmd.Params[1]));
-                        break;
-
-                    case SvgTransformParser.TransformType.Rotate:
-                        if (cmd.Params.Length == 1)
-                        {
-                            matrixHandler.Rotate(Angle.FromDegrees(cmd.Params[0]));
-                        }
-                        else if (cmd.Params.Length >= 3)
-                        {
-                            matrixHandler.Rotate(Angle.FromDegrees(cmd.Params[0]),
-                                   new Vector2(cmd.Params[1], cmd.Params[2]));
-                        }
-                        break;
-
-                    case SvgTransformParser.TransformType.Scale:
-                        if (cmd.Params.Length == 1)
-                            matrixHandler.Scale(new Vector2(cmd.Params[0], cmd.Params[0]));
-                        else if (cmd.Params.Length >= 2)
-                            matrixHandler.Scale(new Vector2(cmd.Params[0], cmd.Params[1]));
-                        break;
-
-                    case SvgTransformParser.TransformType.SkewX:
-                        if (cmd.Params.Length >= 1)
-                        {
-                            var angle = Angle.FromDegrees(cmd.Params[0]);
-                            matrixHandler.Append(new Matrix3x2(1, 0, (float)Math.Tan(angle), 1, 0, 0));
-                        }
-                        break;
-
-                    case SvgTransformParser.TransformType.SkewY:
-                        if (cmd.Params.Length >= 1)
-                        {
-                            var angle = Angle.FromDegrees(cmd.Params[0]);
-                            matrixHandler.Append(new Matrix3x2(1, (float)Math.Tan(angle), 0, 1, 0, 0));
-                        }
-                        break;
-
-                    case SvgTransformParser.TransformType.Matrix:
-                        if (cmd.Params.Length == 6)
-                        {
-                            matrixHandler.Append(new Matrix3x2(
-                                cmd.Params[0], cmd.Params[1],
-                                cmd.Params[2], cmd.Params[3],
-                                cmd.Params[4], cmd.Params[5]
-                            ));
-                        }
-                        break;
-                }
-            }
-        }
-
+        DefineTransform(node, matrixHandler);
 
         beforeDraw?.Invoke(node, matrixHandler);
 
@@ -166,6 +98,77 @@ public sealed class SvgDocument
             default:
                 //Logger.Error("Unknown element: " + el.Name);
                 break;
+        }
+    }
+
+    private void DefineTransform(MiniXmlElement node, MatrixHandler matrixHandler)
+    {
+        if (!node.HasAttribute("transform"))
+            return;
+
+        if(!node.TryGetNonSerializedAttribute<List<SvgTransformParser.TransformCmd>>("transform", out var transform))
+        {
+            transform = SvgTransformParser.ParseTransform(node.GetAttribute("transform"));
+            node.NonSerializedAttributes.Add("transform", transform);
+        }
+
+        foreach (var cmd in transform)
+        {
+            switch (cmd.Type)
+            {
+                case SvgTransformParser.TransformType.Translate:
+                    if (cmd.Params.Length == 1)
+                        matrixHandler.Transform(new Vector2(cmd.Params[0], 0));
+                    else if (cmd.Params.Length >= 2)
+                        matrixHandler.Transform(new Vector2(cmd.Params[0], cmd.Params[1]));
+                    break;
+
+                case SvgTransformParser.TransformType.Rotate:
+                    if (cmd.Params.Length == 1)
+                    {
+                        matrixHandler.Rotate(Angle.FromDegrees(cmd.Params[0]));
+                    }
+                    else if (cmd.Params.Length >= 3)
+                    {
+                        matrixHandler.Rotate(Angle.FromDegrees(cmd.Params[0]),
+                            new Vector2(cmd.Params[1], cmd.Params[2]));
+                    }
+                    break;
+
+                case SvgTransformParser.TransformType.Scale:
+                    if (cmd.Params.Length == 1)
+                        matrixHandler.Scale(new Vector2(cmd.Params[0], cmd.Params[0]));
+                    else if (cmd.Params.Length >= 2)
+                        matrixHandler.Scale(new Vector2(cmd.Params[0], cmd.Params[1]));
+                    break;
+
+                case SvgTransformParser.TransformType.SkewX:
+                    if (cmd.Params.Length >= 1)
+                    {
+                        var angle = Angle.FromDegrees(cmd.Params[0]);
+                        matrixHandler.Append(new Matrix3x2(1, 0, (float)Math.Tan(angle), 1, 0, 0));
+                    }
+                    break;
+
+                case SvgTransformParser.TransformType.SkewY:
+                    if (cmd.Params.Length >= 1)
+                    {
+                        var angle = Angle.FromDegrees(cmd.Params[0]);
+                        matrixHandler.Append(new Matrix3x2(1, (float)Math.Tan(angle), 0, 1, 0, 0));
+                    }
+                    break;
+
+                case SvgTransformParser.TransformType.Matrix:
+                    if (cmd.Params.Length == 6)
+                    {
+                        matrixHandler.Append(new Matrix3x2(
+                            cmd.Params[0], cmd.Params[1],
+                            cmd.Params[2], cmd.Params[3],
+                            cmd.Params[4], cmd.Params[5]
+                        ));
+                    }
+                    break;
+            }
         }
     }
 
@@ -307,13 +310,13 @@ public sealed class SvgDocument
         }
     }
 
-    private List<Vector2> strokeVertices = new();
-    private List<Vector2> fillVertices = new();
+    private List<Vector2> vertices = new();
 
     private void DrawPath(DrawingHandleBase g, MiniXmlElement el, SvgStyle style)
     {
         var d = el.GetAttribute("d");
-        if (string.IsNullOrWhiteSpace(d)) return;
+        if (string.IsNullOrWhiteSpace(d))
+            return;
 
         if (!el.TryGetNonSerializedAttribute<List<SvgPathParser.SvgCmd>>("d", out var path))
         {
@@ -321,8 +324,7 @@ public sealed class SvgDocument
             el.NonSerializedAttributes["d"] = path;
         }
 
-        strokeVertices.Clear();
-        fillVertices.Clear();
+        vertices.Clear();
 
         float currentX = 0, currentY = 0;
         float lastCtrlX = 0, lastCtrlY = 0;
@@ -340,8 +342,7 @@ public sealed class SvgDocument
                     currentX = (c == 'm') ? currentX + p[0] : p[0];
                     currentY = (c == 'm') ? currentY + p[1] : p[1];
                     startX = currentX; startY = currentY;
-                    strokeVertices.Add(new Vector2(currentX, currentY));
-                    fillVertices.Add(new Vector2(currentX, currentY));
+                    vertices.Add(new Vector2(currentX, currentY));
                     break;
 
                 case 'L':
@@ -349,8 +350,7 @@ public sealed class SvgDocument
                     {
                         var x = (c == 'l') ? currentX + p[0] : p[0];
                         var y = (c == 'l') ? currentY + p[1] : p[1];
-                        strokeVertices.Add(new Vector2(x, y));
-                        fillVertices.Add(new Vector2(x, y));
+                        vertices.Add(new Vector2(x, y));
                         currentX = x; currentY = y;
                     }
                     break;
@@ -359,8 +359,7 @@ public sealed class SvgDocument
                 case 'h':
                     {
                         var x = (c == 'h') ? currentX + p[0] : p[0];
-                        strokeVertices.Add(new Vector2(x, currentY));
-                        fillVertices.Add(new Vector2(x, currentY));
+                        vertices.Add(new Vector2(x, currentY));
                         currentX = x;
                     }
                     break;
@@ -369,8 +368,7 @@ public sealed class SvgDocument
                 case 'v':
                     {
                         var y = (c == 'v') ? currentY + p[0] : p[0];
-                        strokeVertices.Add(new Vector2(currentX, y));
-                        fillVertices.Add(new Vector2(currentX, y));
+                        vertices.Add(new Vector2(currentX, y));
                         currentY = y;
                     }
                     break;
@@ -385,12 +383,11 @@ public sealed class SvgDocument
                         var x = (c == 'c') ? currentX + p[4] : p[4];
                         var y = (c == 'c') ? currentY + p[5] : p[5];
 
-                        ApproximateCubicBezier(strokeVertices, currentX, currentY, x1, y1, x2, y2, x, y);
-
-                        for (var i = strokeVertices.Count - 16; i < strokeVertices.Count; i++)
+                        foreach (var pos in ApproximateCubicBezier( currentX, currentY, x1, y1, x2, y2, x, y))
                         {
-                            fillVertices.Add(strokeVertices[i]);
+                            vertices.Add(pos);
                         }
+
                         lastCtrlX = x2; lastCtrlY = y2;
                         currentX = x; currentY = y;
                     }
@@ -406,12 +403,11 @@ public sealed class SvgDocument
                         var x = (c == 's') ? currentX + p[2] : p[2];
                         var y = (c == 's') ? currentY + p[3] : p[3];
 
-                        ApproximateCubicBezier(strokeVertices, currentX, currentY, x1, y1, x2, y2, x, y);
-
-                        for (var i = strokeVertices.Count - 16; i < strokeVertices.Count; i++)
+                        foreach (var pos in ApproximateCubicBezier(currentX, currentY, x1, y1, x2, y2, x, y))
                         {
-                            fillVertices.Add(strokeVertices[i]);
+                            vertices.Add(pos);
                         }
+
                         lastCtrlX = x2; lastCtrlY = y2;
                         currentX = x; currentY = y;
                     }
@@ -431,12 +427,11 @@ public sealed class SvgDocument
                         var cx2 = x + 2f / 3 * (x1 - x);
                         var cy2 = y + 2f / 3 * (y1 - y);
 
-                        ApproximateCubicBezier(strokeVertices, currentX, currentY, cx1, cy1, cx2, cy2, x, y);
-
-                        for (var i = strokeVertices.Count - 16; i < strokeVertices.Count; i++)
+                        foreach (var pos in ApproximateCubicBezier( currentX, currentY, cx1, cy1, cx2, cy2, x, y))
                         {
-                            fillVertices.Add(strokeVertices[i]);
+                            vertices.Add(pos);
                         }
+
                         lastCtrlX = x1; lastCtrlY = y1;
                         currentX = x; currentY = y;
                     }
@@ -455,11 +450,11 @@ public sealed class SvgDocument
                         var cx2 = x + 2f / 3 * (x1 - x);
                         var cy2 = y + 2f / 3 * (y1 - y);
 
-                        ApproximateCubicBezier(strokeVertices, currentX, currentY, cx1, cy1, cx2, cy2, x, y);
-                        for (var i = strokeVertices.Count - 16; i < strokeVertices.Count; i++)
+                        foreach (var pos in ApproximateCubicBezier( currentX, currentY, cx1, cy1, cx2, cy2, x, y))
                         {
-                            fillVertices.Add(strokeVertices[i]);
+                            vertices.Add(pos);
                         }
+
                         lastCtrlX = x1; lastCtrlY = y1;
                         currentX = x; currentY = y;
                     }
@@ -467,8 +462,7 @@ public sealed class SvgDocument
 
                 case 'Z':
                 case 'z':
-                    strokeVertices.Add(new Vector2(startX, startY));
-                    fillVertices.Add(new Vector2(startX, startY));
+                    vertices.Add(new Vector2(startX, startY));
                     currentX = startX; currentY = startY;
                     break;
 
@@ -478,17 +472,20 @@ public sealed class SvgDocument
             }
         }
 
-        if (style.Fill.HasValue && fillVertices.Count >= 3)
+        if (style.Fill.HasValue && vertices.Count >= 3)
         {
-            g.DrawPrimitives(DrawPrimitiveTopology.TriangleFan, fillVertices, style.Fill.Value);
+            if(EarClipping.Triangulate(vertices, out var tris))
+                g.DrawPrimitives(DrawPrimitiveTopology.TriangleList, tris, style.Fill.Value);
+            else
+                g.DrawPrimitives(DrawPrimitiveTopology.TriangleFan, vertices, style.Fill.Value);
         }
-        if (style.Stroke.HasValue && strokeVertices.Count >= 2)
+        if (style.Stroke.HasValue && vertices.Count >= 2)
         {
-            g.DrawPrimitives(DrawPrimitiveTopology.LineStrip, strokeVertices, style.Stroke.Value);
+            g.DrawPrimitives(DrawPrimitiveTopology.LineStrip, vertices, style.Stroke.Value);
         }
     }
 
-    private void ApproximateCubicBezier(List<Vector2> verts, float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, int segments = 16)
+    private IEnumerable<Vector2> ApproximateCubicBezier(float x0, float y0, float x1, float y1, float x2, float y2, float x3, float y3, int segments = 16)
     {
         for (var i = 1; i <= segments; i++)
         {
@@ -502,8 +499,79 @@ public sealed class SvgDocument
             var x = uuu * x0 + 3 * uu * t * x1 + 3 * u * tt * x2 + ttt * x3;
             var y = uuu * y0 + 3 * uu * t * y1 + 3 * u * tt * y2 + ttt * y3;
 
-            verts.Add(new Vector2(x, y));
+            yield return new(x, y);
         }
+    }
+}
+
+public static class EarClipping
+{
+    public static bool Triangulate(List<Vector2> polygon, out List<Vector2> triangles)
+    {
+        triangles = new List<Vector2>();
+        var vertices = new List<Vector2>(polygon);
+
+        if (vertices.Count < 3)
+            return false;
+
+        while (vertices.Count > 3)
+        {
+            var earFound = false;
+            for (var i = 0; i < vertices.Count; i++)
+            {
+                var prev = vertices[(i - 1 + vertices.Count) % vertices.Count];
+                var curr = vertices[i];
+                var next = vertices[(i + 1) % vertices.Count];
+
+                if (IsConvex(prev, curr, next))
+                {
+                    // Check if any other vertex lies inside this potential ear triangle
+                    var hasPointInside = vertices.Any(p => p != prev && p != curr && p != next && PointInTriangle(p, prev, curr, next));
+
+                    if (!hasPointInside)
+                    {
+                        triangles.Add(prev);
+                        triangles.Add(curr);
+                        triangles.Add(next);
+
+                        vertices.RemoveAt(i);
+                        earFound = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!earFound)
+            {
+                return false;
+            }
+        }
+
+        triangles.Add(vertices[0]);
+        triangles.Add(vertices[1]);
+        triangles.Add(vertices[2]);
+
+        return true;
+    }
+
+    private static float Cross(Vector2 a, Vector2 b, Vector2 c)
+    {
+        return (b.X - a.X) * (c.Y - a.Y) - (b.Y - a.Y) * (c.X - a.X);
+    }
+
+    private static bool IsConvex(Vector2 a, Vector2 b, Vector2 c)
+    {
+        return Cross(a, b, c) > 0; // assuming counter-clockwise polygon
+    }
+
+    private static bool PointInTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
+    {
+        var cross1 = Cross(a, b, p);
+        var cross2 = Cross(b, c, p);
+        var cross3 = Cross(c, a, p);
+        var hasNeg = (cross1 < 0) || (cross2 < 0) || (cross3 < 0);
+        var hasPos = (cross1 > 0) || (cross2 > 0) || (cross3 > 0);
+        return !(hasNeg && hasPos);
     }
 }
 

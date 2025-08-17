@@ -38,8 +38,8 @@ public sealed class SvgRenderOverlay : Overlay
             {
                 SvgTransformHelper.Define(element, matrix)
                     .WithRoot()
-                    .Transform(new(150,150))
-                    .Scale(new(2));
+                    .Transform(new(50,50))
+                    .Scale(new(4));
 
                 SvgTransformHelper.Define(element, matrix)
                     .WithIds("RightPuppil", "LeftPuppil")
@@ -56,6 +56,30 @@ public sealed class SvgRenderOverlay : Overlay
                 SvgTransformHelper.Define(element, matrix)
                     .WithIds("g26", "g27")
                     .Transform(new Vector2(0, p.Y / 2));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("LeftHand")
+                    .Rotate(Angle.FromDegrees(double.Sin(_gameTiming.CurFrame/4d)*15),Vector2.Transform(new Vector2(124, 100), matrix.Matrix));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("layer3")
+                    .Rotate(Angle.FromDegrees(-double.Sin(_gameTiming.CurFrame/4d)*15),Vector2.Transform(new Vector2(105, 102), matrix.Matrix));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("RightLeg")
+                    .Rotate(Angle.FromDegrees(double.Sin(_gameTiming.CurFrame/4d+double.Pi/2d)*15),Vector2.Transform(new Vector2(99, 147), matrix.Matrix));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("LeftLeg")
+                    .Rotate(Angle.FromDegrees(double.Sin(_gameTiming.CurFrame/4d)*15),Vector2.Transform(new Vector2(117, 147), matrix.Matrix));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("g2")
+                    .Rotate(Angle.FromDegrees(double.Sin(_gameTiming.CurFrame/4d+double.Pi/2d)*15+15),Vector2.Transform(new Vector2(100, 162), matrix.Matrix));
+
+                SvgTransformHelper.Define(element, matrix)
+                    .WithIds("g3")
+                    .Rotate(Angle.FromDegrees(double.Sin(_gameTiming.CurFrame/4d)*15+15),Vector2.Transform(new Vector2(117, 162), matrix.Matrix));
             });
     }
 }
