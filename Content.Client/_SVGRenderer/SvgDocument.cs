@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Numerics;
 using System.Text.RegularExpressions;
+using Content.Client._SVGRenderer.Triangulation;
 using Robust.Client.Graphics;
 
 
@@ -474,10 +475,7 @@ public sealed class SvgDocument
 
         if (style.Fill.HasValue && vertices.Count >= 3)
         {
-            if(EarClipping.Triangulate(vertices, out var tris))
-                g.DrawPrimitives(DrawPrimitiveTopology.TriangleList, tris, style.Fill.Value);
-            else
-                g.DrawPrimitives(DrawPrimitiveTopology.TriangleFan, vertices, style.Fill.Value);
+            g.DrawPrimitives(DrawPrimitiveTopology.TriangleList, vertices, style.Fill.Value);
         }
         if (style.Stroke.HasValue && vertices.Count >= 2)
         {

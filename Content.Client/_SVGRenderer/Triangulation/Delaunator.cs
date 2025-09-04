@@ -1,4 +1,5 @@
 using System.Linq;
+using System.Numerics;
 
 
 namespace Content.Client._SVGRenderer.Triangulation;
@@ -6,36 +7,36 @@ namespace Content.Client._SVGRenderer.Triangulation;
 
 public sealed class Delaunator
 {
-    private readonly double[] _coords;
+    private readonly float[] _coords;
     private readonly int[] _edgeStack = new int[512];
-    private readonly double _epsilon = Math.Pow(2, -52);
+    private readonly float _epsilon = float.Pow(2, -52);
 
     private readonly int _hashSize;
     private readonly int[] _hullPrev;
     private readonly int _hullStart;
     private readonly int[] _hullTri;
 
-    private readonly double _cx;
-    private readonly double _cy;
+    private readonly float _cx;
+    private readonly float _cy;
 
     private int _trianglesLen;
 
-    public Delaunator(Vector2d[] vector2ds)
+    public Delaunator(Vector2[] vector2s)
     {
-        if (vector2ds.Length < 3)
-            throw new ArgumentOutOfRangeException("Need at least 3 Vector2ds");
+        if (vector2s.Length < 3)
+            throw new ArgumentOutOfRangeException("Need at least 3 Vector2s");
 
-        vector2ds = vector2ds;
-        _coords = new double[vector2ds.Length * 2];
+        Vector2s = vector2s;
+        _coords = new float[Vector2s.Length * 2];
 
-        for (var i = 0; i < vector2ds.Length; i++)
+        for (var i = 0; i < Vector2s.Length; i++)
         {
-            var p = vector2ds[i];
+            var p = Vector2s[i];
             _coords[2 * i] = p.X;
             _coords[2 * i + 1] = p.Y;
         }
 
-        var n = vector2ds.Length;
+        var n = Vector2s.Length;
         var maxTriangles = 2 * n - 5;
 
         Triangles = new int[maxTriangles * 3];
@@ -50,10 +51,10 @@ public sealed class Delaunator
 
         var ids = new int[n];
 
-        var minX = double.PositiveInfinity;
-        var minY = double.PositiveInfinity;
-        var maxX = double.NegativeInfinity;
-        var maxY = double.NegativeInfinity;
+        var minX = float.PositiveInfinity;
+        var minY = float.PositiveInfinity;
+        var maxX = float.NegativeInfinity;
+        var maxY = float.NegativeInfinity;
 
         for (var i = 0; i < n; i++)
         {
@@ -73,12 +74,12 @@ public sealed class Delaunator
         var cx = (minX + maxX) / 2;
         var cy = (minY + maxY) / 2;
 
-        var minDist = double.PositiveInfinity;
+        var minDist = float.PositiveInfinity;
         var i0 = 0;
         var i1 = 0;
         var i2 = 0;
 
-        // pick a seed Vector2d close to the center
+        // pick a seed Vector2 close to the center
         for (var i = 0; i < n; i++)
         {
             var d = Dist(cx, cy, _coords[2 * i], _coords[2 * i + 1]);
@@ -92,9 +93,9 @@ public sealed class Delaunator
         var i0X = _coords[2 * i0];
         var i0Y = _coords[2 * i0 + 1];
 
-        minDist = double.PositiveInfinity;
+        minDist = float.PositiveInfinity;
 
-        // find the Vector2d closest to the seed
+        // find the Vector2 closest to the seed
         for (var i = 0; i < n; i++)
         {
             if (i == i0)
@@ -110,9 +111,9 @@ public sealed class Delaunator
         var i1X = _coords[2 * i1];
         var i1Y = _coords[2 * i1 + 1];
 
-        var minRadius = double.PositiveInfinity;
+        var minRadius = float.PositiveInfinity;
 
-        // find the third Vector2d which forms the smallest circumcircle with the first two
+        // find the third Vector2 which forms the smallest circumcircle with the first two
         for (var i = 0; i < n; i++)
         {
             if (i == i0 || i == i1)
@@ -128,7 +129,7 @@ public sealed class Delaunator
         var i2X = _coords[2 * i2];
         var i2Y = _coords[2 * i2 + 1];
 
-        if (double.IsPositiveInfinity(minRadius))
+        if (float.IsPositiveInfinity(minRadius))
             throw new("No Delaunay triangulation exists for this input.");
 
         if (Orient(i0X, i0Y, i1X, i1Y, i2X, i2Y))
@@ -148,11 +149,11 @@ public sealed class Delaunator
         this._cx = center.X;
         this._cy = center.Y;
 
-        var dists = new double[n];
+        var dists = new float[n];
         for (var i = 0; i < n; i++)
             dists[i] = Dist(_coords[2 * i], _coords[2 * i + 1], center.X, center.Y);
 
-        // sort the Vector2ds by distance from the seed triangle circumcenter
+        // sort the Vector2s by distance from the seed triangle circumcenter
         Quicksort(ids, dists, 0, n - 1);
 
         // set up the seed triangle as the starting hull
@@ -174,8 +175,8 @@ public sealed class Delaunator
         _trianglesLen = 0;
         AddTriangle(i0, i1, i2, -1, -1, -1);
 
-        double xp = 0;
-        double yp = 0;
+        float xp = 0;
+        float yp = 0;
 
         for (var k = 0; k < ids.Length; k++)
         {
@@ -183,13 +184,13 @@ public sealed class Delaunator
             var x = _coords[2 * i];
             var y = _coords[2 * i + 1];
 
-            // skip near-duplicate Vector2ds
+            // skip near-duplicate Vector2s
             if (k > 0 && Math.Abs(x - xp) <= _epsilon && Math.Abs(y - yp) <= _epsilon)
                 continue;
             xp = x;
             yp = y;
 
-            // skip seed triangle Vector2ds
+            // skip seed triangle Vector2s
             if (i == i0 || i == i1 || i == i2)
                 continue;
 
@@ -221,12 +222,12 @@ public sealed class Delaunator
             }
 
             if (e == int.MaxValue)
-                continue; // likely a near-duplicate Vector2d; skip it
+                continue; // likely a near-duplicate Vector2; skip it
 
-            // add the first triangle from the Vector2d
+            // add the first triangle from the Vector2
             var t = AddTriangle(e, i, hullNext[e], -1, -1, _hullTri[e]);
 
-            // recursively flip triangles from the Vector2d until they satisfy the Delaunay condition
+            // recursively flip triangles from the Vector2 until they satisfy the Delaunay condition
             _hullTri[i] = Legalize(t + 2);
             _hullTri[e] = t; // keep track of boundary triangles on the hull
             hullSize++;
@@ -290,7 +291,7 @@ public sealed class Delaunator
     }
 
     /// <summary>
-    ///     One value per half-edge, containing the Vector2d index of where a given half edge starts.
+    ///     One value per half-edge, containing the Vector2 index of where a given half edge starts.
     /// </summary>
     public int[] Triangles { get; }
 
@@ -301,12 +302,12 @@ public sealed class Delaunator
     public int[] Halfedges { get; }
 
     /// <summary>
-    ///     The initial Vector2ds Delaunator was constructed with.
+    ///     The initial Vector2s Delaunator was constructed with.
     /// </summary>
-    public Vector2d[] Vector2ds { get; } = [];
+    public Vector2[] Vector2s { get; } = [];
 
     /// <summary>
-    ///     A list of Vector2d indices that traverses the hull of the Vector2ds.
+    ///     A list of Vector2 indices that traverses the hull of the Vector2s.
     /// </summary>
     public int[] Hull { get; }
 
@@ -412,7 +413,7 @@ public sealed class Delaunator
         return ar;
     }
 
-    private static bool InCircle(double ax, double ay, double bx, double by, double cx, double cy, double px, double py)
+    private static bool InCircle(float ax, float ay, float bx, float by, float cx, float cy, float px, float py)
     {
         var dx = ax - px;
         var dy = ay - py;
@@ -453,15 +454,15 @@ public sealed class Delaunator
             Halfedges[b] = a;
     }
 
-    private int HashKey(double x, double y) => (int) (Math.Floor(PseudoAngle(x - _cx, y - _cy) * _hashSize) % _hashSize);
+    private int HashKey(float x, float y) => (int) (Math.Floor(PseudoAngle(x - _cx, y - _cy) * _hashSize) % _hashSize);
 
-    private static double PseudoAngle(double dx, double dy)
+    private static float PseudoAngle(float dx, float dy)
     {
         var p = dx / (Math.Abs(dx) + Math.Abs(dy));
         return (dy > 0 ? 3 - p : 1 + p) / 4; // [0..1]
     }
 
-    private static void Quicksort(int[] ids, double[] dists, int left, int right)
+    private static void Quicksort(int[] ids, float[] dists, int left, int right)
     {
         if (right - left <= 20)
         {
@@ -526,10 +527,10 @@ public sealed class Delaunator
         arr[j] = tmp;
     }
 
-    private static bool Orient(double px, double py, double qx, double qy, double rx, double ry) =>
+    private static bool Orient(float px, float py, float qx, float qy, float rx, float ry) =>
         (qy - py) * (rx - qx) - (qx - px) * (ry - qy) < 0;
 
-    private static double Circumradius(double ax, double ay, double bx, double by, double cx, double cy)
+    private static float Circumradius(float ax, float ay, float bx, float by, float cx, float cy)
     {
         var dx = bx - ax;
         var dy = by - ay;
@@ -537,13 +538,13 @@ public sealed class Delaunator
         var ey = cy - ay;
         var bl = dx * dx + dy * dy;
         var cl = ex * ex + ey * ey;
-        var d = 0.5 / (dx * ey - dy * ex);
+        var d = 0.5f / (dx * ey - dy * ex);
         var x = (ey * bl - dy * cl) * d;
         var y = (dx * cl - ex * bl) * d;
         return x * x + y * y;
     }
 
-    private static Vector2d Circumcenter(double ax, double ay, double bx, double by, double cx, double cy)
+    private static Vector2 Circumcenter(float ax, float ay, float bx, float by, float cx, float cy)
     {
         var dx = bx - ax;
         var dy = by - ay;
@@ -551,14 +552,14 @@ public sealed class Delaunator
         var ey = cy - ay;
         var bl = dx * dx + dy * dy;
         var cl = ex * ex + ey * ey;
-        var d = 0.5 / (dx * ey - dy * ex);
+        var d = 0.5f / (dx * ey - dy * ex);
         var x = ax + (ey * bl - dy * cl) * d;
         var y = ay + (dx * cl - ex * bl) * d;
 
         return new(x, y);
     }
 
-    private static double Dist(double ax, double ay, double bx, double by)
+    private static float Dist(float ax, float ay, float bx, float by)
     {
         var dx = ax - bx;
         var dy = ay - by;
@@ -572,7 +573,7 @@ public sealed class Delaunator
     public IEnumerable<Triangle> GetTriangles()
     {
         for (var t = 0; t < Triangles.Length / 3; t++)
-            yield return new(t, GetTriangleVector2ds(t));
+            yield return new(t, GetTriangleVector2s(t));
     }
 
     public IEnumerable<Edge> GetEdges()
@@ -580,13 +581,13 @@ public sealed class Delaunator
         for (var e = 0; e < Triangles.Length; e++)
             if (e > Halfedges[e])
             {
-                var p = Vector2ds[Triangles[e]];
-                var q = Vector2ds[Triangles[NextHalfedge(e)]];
+                var p = Vector2s[Triangles[e]];
+                var q = Vector2s[Triangles[NextHalfedge(e)]];
                 yield return new(e, p, q);
             }
     }
 
-    public IEnumerable<Edge> GetVoronoEdges(Func<int, Vector2d>? triangleVerticeSelector = null)
+    public IEnumerable<Edge> GetVoronoEdges(Func<int, Vector2>? triangleVerticeSelector = null)
     {
         if (triangleVerticeSelector == null)
             triangleVerticeSelector = x => GetCentroid(x);
@@ -602,24 +603,24 @@ public sealed class Delaunator
     public IEnumerable<Edge> GetVoronoEdgesBasedOnCircumCenter() => GetVoronoEdges(GetTriangleCircumcenter);
     public IEnumerable<Edge> GetVoronoEdgesBasedOnCentroids() => GetVoronoEdges(GetCentroid);
 
-    public IEnumerable<VoronoiCell> GetVoronoiCells(Func<int, Vector2d>? triangleVerticeSelector = null)
+    public IEnumerable<VoronoiCell> GetVoronoiCells(Func<int, Vector2>? triangleVerticeSelector = null)
     {
         if (triangleVerticeSelector == null)
             triangleVerticeSelector = x => GetCentroid(x);
 
         var seen = new HashSet<int>();
-        var vertices = new List<Vector2d>(10); // Keep it outside the loop, reuse capacity, less resizes.
+        var vertices = new List<Vector2>(10); // Keep it outside the loop, reuse capacity, less resizes.
 
         for (var e = 0; e < Triangles.Length; e++)
         {
-            var vector2dIndex = Triangles[NextHalfedge(e)];
+            var Vector2Index = Triangles[NextHalfedge(e)];
             // True if element was added, If resize the set? O(n) : O(1)
-            if (seen.Add(vector2dIndex))
+            if (seen.Add(Vector2Index))
             {
-                foreach (var edge in EdgesAroundVector2d(e))
+                foreach (var edge in EdgesAroundVector2(e))
                     // triangleVerticeSelector cant be null, no need to check before invoke (?.).
                     vertices.Add(triangleVerticeSelector.Invoke(TriangleOfEdge(edge)));
-                yield return new(vector2dIndex, vertices.ToArray());
+                yield return new(Vector2Index, vertices.ToArray());
                 vertices.Clear(); // Clear elements, keep capacity
             }
         }
@@ -628,59 +629,59 @@ public sealed class Delaunator
     public IEnumerable<VoronoiCell> GetVoronoiCellsBasedOnCircumcenters() => GetVoronoiCells(GetTriangleCircumcenter);
     public IEnumerable<VoronoiCell> GetVoronoiCellsBasedOnCentroids() => GetVoronoiCells(GetCentroid);
 
-    public IEnumerable<Edge> GetHullEdges() => CreateHull(GetHullVector2ds());
+    public IEnumerable<Edge> GetHullEdges() => CreateHull(GetHullVector2s());
 
-    public Vector2d[] GetHullVector2ds() => Hull.Select(x => Vector2ds[x]).ToArray();
+    public Vector2[] GetHullVector2s() => Hull.Select(x => Vector2s[x]).ToArray();
 
-    public Vector2d[] GetTriangleVector2ds(int t)
+    public Vector2[] GetTriangleVector2s(int t)
     {
-        var vector2ds = new List<Vector2d>();
-        foreach (var p in Vector2dsOfTriangle(t))
-            vector2ds.Add(vector2ds[p]);
-        return vector2ds.ToArray();
+        var Vector2s = new List<Vector2>();
+        foreach (var p in Vector2sOfTriangle(t))
+            Vector2s.Add(Vector2s[p]);
+        return Vector2s.ToArray();
     }
 
-    public Vector2d[] GetRellaxedVector2ds()
+    public Vector2[] GetRellaxedVector2s()
     {
-        var vector2ds = new List<Vector2d>();
+        var Vector2s = new List<Vector2>();
         foreach (var cell in GetVoronoiCellsBasedOnCircumcenters())
-            vector2ds.Add(GetCentroid(cell.Points));
-        return vector2ds.ToArray();
+            Vector2s.Add(GetCentroid(cell.Points));
+        return Vector2s.ToArray();
     }
 
     public IEnumerable<Edge> GetEdgesOfTriangle(int t) =>
-        CreateHull(EdgesOfTriangle(t).Select(e => Vector2ds[Triangles[e]]));
+        CreateHull(EdgesOfTriangle(t).Select(e => Vector2s[Triangles[e]]));
 
-    public static IEnumerable<Edge> CreateHull(IEnumerable<Vector2d> vector2ds) =>
-        vector2ds.Zip(vector2ds.Skip(1).Append(vector2ds.FirstOrDefault()), (a, b) => new Edge(0, a, b)).OfType<Edge>();
+    public static IEnumerable<Edge> CreateHull(IEnumerable<Vector2> Vector2s) =>
+        Vector2s.Zip(Vector2s.Skip(1).Append(Vector2s.FirstOrDefault()), (a, b) => new Edge(0, a, b)).OfType<Edge>();
 
-    public Vector2d GetTriangleCircumcenter(int t)
+    public Vector2 GetTriangleCircumcenter(int t)
     {
-        var vertices = GetTriangleVector2ds(t);
+        var vertices = GetTriangleVector2s(t);
         return GetCircumcenter(vertices[0], vertices[1], vertices[2]);
     }
 
-    public Vector2d GetCentroid(int t)
+    public Vector2 GetCentroid(int t)
     {
-        var vertices = GetTriangleVector2ds(t);
+        var vertices = GetTriangleVector2s(t);
         return GetCentroid(vertices);
     }
 
-    public static Vector2d GetCircumcenter(Vector2d a, Vector2d b, Vector2d c) =>
+    public static Vector2 GetCircumcenter(Vector2 a, Vector2 b, Vector2 c) =>
         Circumcenter(a.X, a.Y, b.X, b.Y, c.X, c.Y);
 
-    public static Vector2d GetCentroid(Vector2d[] vector2ds)
+    public static Vector2 GetCentroid(Vector2[] Vector2s)
     {
-        double accumulatedArea = 0.0f;
-        double centerX = 0.0f;
-        double centerY = 0.0f;
+        float accumulatedArea = 0.0f;
+        float centerX = 0.0f;
+        float centerY = 0.0f;
 
-        for (int i = 0, j = vector2ds.Length - 1; i < vector2ds.Length; j = i++)
+        for (int i = 0, j = Vector2s.Length - 1; i < Vector2s.Length; j = i++)
         {
-            var temp = vector2ds[i].X * vector2ds[j].Y - vector2ds[j].X * vector2ds[i].Y;
+            var temp = Vector2s[i].X * Vector2s[j].Y - Vector2s[j].X * Vector2s[i].Y;
             accumulatedArea += temp;
-            centerX += (vector2ds[i].X + vector2ds[j].X) * temp;
-            centerY += (vector2ds[i].Y + vector2ds[j].Y) * temp;
+            centerX += (Vector2s[i].X + Vector2s[j].X) * temp;
+            centerY += (Vector2s[i].Y + Vector2s[j].Y) * temp;
         }
 
         if (Math.Abs(accumulatedArea) < 1E-7f)
@@ -724,7 +725,7 @@ public sealed class Delaunator
             callback?.Invoke(cell);
     }
 
-    public void ForEachVoronoiCell(Action<VoronoiCell> callback, Func<int, Vector2d>? triangleVertexSelector = null)
+    public void ForEachVoronoiCell(Action<VoronoiCell> callback, Func<int, Vector2>? triangleVertexSelector = null)
     {
         foreach (var cell in GetVoronoiCells(triangleVertexSelector))
             callback?.Invoke(cell);
@@ -735,9 +736,9 @@ public sealed class Delaunator
     #region Methods based on index
 
     /// <summary>
-    ///     Returns the half-edges that share a start Vector2d with the given half edge, in order.
+    ///     Returns the half-edges that share a start Vector2 with the given half edge, in order.
     /// </summary>
-    public IEnumerable<int> EdgesAroundVector2d(int start)
+    public IEnumerable<int> EdgesAroundVector2(int start)
     {
         var incoming = start;
         do
@@ -749,9 +750,9 @@ public sealed class Delaunator
     }
 
     /// <summary>
-    ///     Returns the three Vector2d indices of a given triangle id.
+    ///     Returns the three Vector2 indices of a given triangle id.
     /// </summary>
-    public IEnumerable<int> Vector2dsOfTriangle(int t)
+    public IEnumerable<int> Vector2sOfTriangle(int t)
     {
         foreach (var edge in EdgesOfTriangle(t))
             yield return Triangles[edge];
