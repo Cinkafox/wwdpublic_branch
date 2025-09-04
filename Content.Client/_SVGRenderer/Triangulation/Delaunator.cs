@@ -635,18 +635,18 @@ public sealed class Delaunator
 
     public Vector2[] GetTriangleVector2s(int t)
     {
-        var Vector2s = new List<Vector2>();
+        var Vector2sT = new List<Vector2>();
         foreach (var p in Vector2sOfTriangle(t))
-            Vector2s.Add(Vector2s[p]);
-        return Vector2s.ToArray();
+            Vector2sT.Add(Vector2s[p]);
+        return Vector2sT.ToArray();
     }
 
     public Vector2[] GetRellaxedVector2s()
     {
-        var Vector2s = new List<Vector2>();
+        var Vector2sT = new List<Vector2>();
         foreach (var cell in GetVoronoiCellsBasedOnCircumcenters())
-            Vector2s.Add(GetCentroid(cell.Points));
-        return Vector2s.ToArray();
+            Vector2sT.Add(GetCentroid(cell.Points));
+        return Vector2sT.ToArray();
     }
 
     public IEnumerable<Edge> GetEdgesOfTriangle(int t) =>

@@ -475,7 +475,13 @@ public sealed class SvgDocument
 
         if (style.Fill.HasValue && vertices.Count >= 3)
         {
-            g.DrawPrimitives(DrawPrimitiveTopology.TriangleList, vertices, style.Fill.Value);
+            var del = new Delaunator(vertices.ToArray());
+
+            foreach (var triangle in del.GetTriangles())
+            {
+                g.DrawPrimitives(DrawPrimitiveTopology.LineLoop, triangle.Points.ToList(), style.Fill.Value);
+            }
+
         }
         if (style.Stroke.HasValue && vertices.Count >= 2)
         {
