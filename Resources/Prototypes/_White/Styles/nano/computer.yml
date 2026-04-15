@@ -1,0 +1,56 @@
+﻿- type: styleSheet
+  id: computer
+  typeDefinition:
+    PanelContainer: "Robust.Client.UserInterface.Controls.PanelContainer"
+    ContainerButton: "Robust.Client.UserInterface.Controls.ContainerButton"
+    ProgressBar: "Robust.Client.UserInterface.Controls.ProgressBar"
+    Button: "Content.Client.UserInterface.Controls.Button"
+  styles:
+    PanelContainer.AngleRect.NovaComputer:
+      panel:
+        valueType: Robust.Client.Graphics.StyleBoxTexture
+        value:
+          texture: "/Textures/_White/NovaUI/Computer/screen.png"
+          patchMarginAll: 46
+          expandMarginAll: 30
+          textureScale: 2,2
+      modulate-self: "#FFFFFF"
+    PanelContainer.WindowHeadingBackground.NovaComputer:
+      panel:
+        valueType: Robust.Client.Graphics.StyleBoxTexture
+        value:
+          texture: "/Textures/_White/NovaUI/Computer/header.png"
+          patchMargin: 34,7,34,7
+          expandMargin: 30,7,30,7
+          textureScale: 2,2
+      modulate-self: "#FFFFFF"
+    .NovaComputer.button:normal:
+      stylebox:
+        valueType: Robust.Client.Graphics.StyleBoxFlat
+        value:
+          backgroundColor: "#FFFFFF"
+          borderThickness: 0,0,0,12
+          borderColor: "#AAAAAA"
+      modulate-self: "#FFFFFF"
+    .NovaComputer button:
+      font-color: "#222222"
+
+    .NovaComputer.button:pressed:
+      stylebox:
+        valueType: Robust.Client.Graphics.StyleBoxFlat
+        value:
+          backgroundColor: "#DDDDDD"
+          borderThickness: 0,0,0,6
+          borderColor: "#AAAAAA"
+      modulate-self: "#FFFFFF"
+    .NovaComputer:pressed button:
+      font-color: "#222222"
+
+    .NovaComputer.button:hover:
+      stylebox:
+        valueType: Robust.Client.Graphics.StyleBoxFlat
+        value:
+          backgroundColor: "#FFFFFF"
+          borderThickness: 0,0,0,8
+          borderColor: "#AAAAAA"
+      modulate-self: "#FFFFFF"

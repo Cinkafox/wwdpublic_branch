@@ -3,7 +3,8 @@
                       xmlns:ui="clr-namespace:Content.Client.Shuttles.UI"
                       Title="{Loc 'shuttle-console-window-title'}"
                       SetSize="960 762"
-                      MinSize="960 762">
+                      MinSize="960 762"
+                      WindowsStyleClass="NovaComputer"> <!-- WWDP EDIT -->
     <BoxContainer Orientation="Vertical">
         <!-- Top row mode buttons -->
         <BoxContainer Name="ModeButtons"
@@ -11,19 +12,19 @@
                        HorizontalAlignment="Stretch"
                        MinSize="52 52"
                        Margin="5">
-            <Button Name="NavModeButton"
+            <Button Name="NavModeButton" StyleClasses="NovaComputer"
                     ToggleMode="True"
                     HorizontalExpand="True"
                     VerticalExpand="True"
                     Text="NAV"
                     Margin="5"/>
-            <Button Name="MapModeButton"
+            <Button Name="MapModeButton" StyleClasses="NovaComputer"
                     ToggleMode="True"
                     HorizontalExpand="True"
                     VerticalExpand="True"
                     Text="MAP"
                     Margin="5"/>
-            <Button Name="DockModeButton"
+            <Button Name="DockModeButton" StyleClasses="NovaComputer"
                     ToggleMode="True"
                     HorizontalExpand="True"
                     VerticalExpand="True"
