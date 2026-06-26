@@ -1,3 +1,4 @@
+using Content.RobustOAuth.Server;
 using Content.Shared.Administration;
 using Content.Shared.CCVar;
 using Content.Shared.GameTicking;
@@ -7,6 +8,7 @@ using Content.Shared.Preferences;
 using JetBrains.Annotations;
 using Robust.Shared.Audio;
 using Robust.Shared.Enums;
+using Robust.Shared.Network;
 using Robust.Shared.Player;
 using Robust.Shared.Timing;
 using Robust.Shared.Utility;
@@ -50,6 +52,13 @@ namespace Content.Server.GameTicking
                         data.Whitelisted = await _db.GetWhitelistStatusAsync(session.UserId); // Nyanotrasen - Whitelist
                         session.Data.ContentDataUncast = data;
                     }
+
+                    if (!await IoCManager.Resolve<IRobustOAuthManager>().CheckPlayerAuth(args.Session))
+                    {
+                        IoCManager.Resolve<IServerNetManager>()
+                            .DisconnectChannel(args.Session.Channel, "Failed to authenticate by OAuth");
+                        return;
+                    } // WWDP EDIT
 
                     // Make the player actually join the game.
                     // timer time must be > tick length

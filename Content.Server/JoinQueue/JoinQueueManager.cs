@@ -81,7 +81,7 @@ public sealed class JoinQueueManager
     {
         if (!_isEnabled)
         {
-            SendToGame(session);
+            //SendToGame(session);
             return;
         }
 

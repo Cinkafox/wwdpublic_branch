@@ -18,6 +18,8 @@
     <PackageReference Include="MathNet.Numerics" PrivateAssets="All" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Content.RobustOAuth.Client\Content.RobustOAuth.Client.csproj" />
+    <ProjectReference Include="..\Content.RobustOAuth.Shared\Content.RobustOAuth.Shared.csproj" />
     <ProjectReference Include="..\RobustToolbox\Lidgren.Network\Lidgren.Network.csproj" />
     <ProjectReference Include="..\RobustToolbox\Robust.Shared.Maths\Robust.Shared.Maths.csproj" />
     <ProjectReference Include="..\RobustToolbox\Robust.Shared\Robust.Shared.csproj" />
